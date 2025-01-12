@@ -1,0 +1,49 @@
+---
+- name: Initialize grouped dictionary
+  set_fact:
+    grouped_interfaces: {}
+
+- name: Group interfaces by pvid
+  set_fact:
+    grouped_interfaces: >-
+      {{
+        grouped_interfaces | combine({
+          item.value.pvid: (grouped_interfaces[item.value.pvid] | default([])) + [item.key]
+        })
+      }}
+  loop: "{{ tlsg2428p_interfaces | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+
+- name: Initialize final list of interfaces
+  set_fact:
+    new_payload: []
+
+- name: Transform grouped dictionary to list format
+  set_fact:
+    new_payload: "{{ new_payload + [{'pvid': pvid, 'key': keys | join(',')}] }}"
+  loop: "{{ grouped_interfaces | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    pvid: "{{ item.key }}"
+    keys: "{{ item.value }}"
+
+- name: Login if tlsg2428p_token is undefined
+  ansible.builtin.include_role:
+    name: login
+  when: tlsg2428p_token is undefined
+
+- name: "POST configuration to switch API"
+  ansible.builtin.uri:
+    url: "{{ 'https://' + tlsg2428p_url + '/data/vlanPortCfg.json?usrLvl=3&_tid_=' + tlsg2428p_token }}"
+    method: POST
+    body:
+      operation: update
+      new: "{{ new_payload }}"
+      tab: unit1
+    body_format: json
+    return_content: true
+    validate_certs: false
+  register: result
+  failed_when: result.json.success is false
