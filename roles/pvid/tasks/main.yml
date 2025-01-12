@@ -36,7 +36,7 @@
 
 - name: "POST configuration to switch API"
   ansible.builtin.uri:
-    url: "{{ 'https://' + tlsg2428p_url + '/data/vlanPortCfg.json?usrLvl=3&_tid_=' + tlsg2428p_token }}"
+    url: "{{ tlsg2428p_url + '/data/vlanPortCfg.json?usrLvl=3&_tid_=' + tlsg2428p_token }}"
     method: POST
     body:
       operation: update

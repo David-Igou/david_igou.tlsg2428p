@@ -2,7 +2,7 @@
 # tasks file for login
 - name: Login
   ansible.builtin.uri:
-    url: '{{ "https://" + tlsg2428p_url + "/data/login.json" }}'
+    url: '{{ tlsg2428p_url + "/data/login.json" }}'
     method: POST
     headers:
       Content-Type: application/json
@@ -12,7 +12,7 @@
       operation: "write"
     body_format: json
     status_code: 200
-    validate_certs: false
+    validate_certs: "{{ tlsg2428p_validate_certs }}"
   register: login_response
   failed_when: login_response.json.success is false
   no_log: false
