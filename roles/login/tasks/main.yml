@@ -1,0 +1,23 @@
+---
+# tasks file for login
+- name: Login
+  ansible.builtin.uri:
+    url: '{{ "https://" + tlsg2428p_url + "/data/login.json" }}'
+    method: POST
+    headers:
+      Content-Type: application/json
+    body:
+      username: "{{ tlsg2428p_username }}"
+      password: "{{ tlsg2428p_password }}"
+      operation: "write"
+    body_format: json
+    status_code: 200
+    validate_certs: false
+  register: login_response
+  failed_when: login_response.json.success is false
+  no_log: false
+
+
+- name: Set tlsg2428p_token fact
+  ansible.builtin.set_fact:
+    tlsg2428p_token: "{{ login_response.json.data._tid_ }}"
