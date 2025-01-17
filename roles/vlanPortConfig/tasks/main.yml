@@ -1,0 +1,32 @@
+---
+- name: initialize interface list
+  set_fact:
+    interfaces_list: []
+
+- name: Append each interface to the list
+  loop: "{{ tlsg2428p_interfaces | dict2items }}"
+  set_fact:
+    interfaces_list: "{{ interfaces_list + [item.value.vlanPortConfig | combine({'key': item.key})] }}"
+
+- name: Display the result
+  debug:
+    var: interfaces_list
+
+- name: Login if tlsg2428p_token is undefined
+  ansible.builtin.include_role:
+    name: login
+  when: tlsg2428p_token is undefined
+
+- name: "POST configuration to switch API"
+  ansible.builtin.uri:
+    url: "{{ tlsg2428p_url + '/data/vlanPortCfg.json?usrLvl=3&_tid_=' + tlsg2428p_token }}"
+    method: POST
+    body:
+      operation: update
+      new: "{{ interfaces_list }}"
+      tab: unit1
+    body_format: json
+    return_content: true
+    validate_certs: false
+  register: result
+  failed_when: result.json.success is false
